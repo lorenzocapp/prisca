@@ -1,0 +1,70 @@
+---
+title: "intro_prisca"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{intro_prisca}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(prisca)
+```
+
+It gives an introduction to the package to do variance change point detection
+
+We start simulating some data 
+
+```{r}
+T <- 500
+x <- seq(0,1,1/(T-1))
+y <- rep(0,T)
+y[x<0.4] <- rnorm(sum(x<0.4),0,2)
+y[x<0.1] <- rnorm(sum(x<0.1),0,1)
+y[x>=0.4] <- rnorm(sum(x>=0.4),0,3)
+y[x>=0.7] <- rnorm(sum(x>=0.7),0,0.6)
+y[x>=0.85] <- rnorm(sum(x>=0.85),0,2)
+plot(y)
+```
+
+
+We detect changes in variance using the prisca function. There a few basics parameters that we are required to set: a0 and L. See below if you don't want to select L
+
+
+```{r}
+a0<-0.00001
+L <- 7
+out <- prisca(y,L,a0)
+```
+
+We extract the credible sets, look at them, and plot them
+
+```{r}
+cs <- credible_set(out$alpha.mat,p=0.9)
+cs
+plot_prisca_sets(out)
+```
+
+I can also plot the data with the detected sets
+
+
+```{r}
+plot_prisca_data_sets(out)
+```
+
+
+If one does not want to choose L, there is an implementation of the autoprisca method described in the paper
+
+
+```{r}
+outAUTO <- autoprisca(y,a0,eps=0.01)
+plot_prisca_sets(outAUTO)
+```
+
