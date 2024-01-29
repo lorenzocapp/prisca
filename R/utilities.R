@@ -230,3 +230,84 @@ trend_filter_bic <- function(y,k=0,prec=1){
   return(mean=path$beta[,best_ind])
 }  
   
+
+
+###Below how to do Laplace approximation with a Half Cauchy prior
+
+f <- function(x,y2,gamma,n) -(-y2/(2*x^2) - n*log(x) - log(gamma^2+x^2)) #- the log likelihood
+d <- function(x,y2,gamma,n) y2/x^3 -n/x + 4*x/(gamma^2+x^2) #gradient
+d2 <- function(x,y2,gamma,n) -3*y2/x^4 +n/x^2 - 4/(gamma^2+x^2)+8*x^2/(gamma^2+x^2)^2 #2nd order derivative
+
+
+
+loglaplace_halfcauchy <-function(y2,gamma,n,f,d2,d,method="optim"){
+  "log Laplace approximation with a Half Cauchy prior at a single point"
+  if (method=="uniroot") {
+    xmin <- uniroot(d, c(0.1, 5), tol = 0.0001, y2=y2,gamma=gamma,n=n)
+  } else {
+    xmin <- optim(par=1,fn = f,y2=y2,gamma=gamma,n=n,method="Brent",lower=0,upper=10)
+    xmin$root <- xmin$par
+  }
+  return(list(lap=-f(xmin$root,y2,gamma,n)+ 1/2*log(2*pi)-1/2*log(abs(d2(xmin$root,y2,gamma,n))),
+              mode=xmin$root))
+} #I put - in front of log like
+
+
+
+logmarginal_halfcauchy <-function(Sy2,gamma,method="optim"){
+  
+  "Complete gain function using log Laplace apprxoimation with  a Half Cauchy prior"
+  T <- length(Sy2)
+  null <- cumsum(c(0,Sy2))[-(T+1)]/2
+  logmarginal <- c()
+  modes <- c()
+  for (i in 1:T){
+    loglap <- loglaplace_halfcauchy(sum(Sy2[i:T]),gamma,(T-i+1),f,d2,d,method)
+    logmarginal <- c(logmarginal,-null[i]+loglap$lap)
+    modes <- c(modes, loglap$mode)
+  }
+  #Note: the mode we return is the variance! not the SD
+  return(list(logmarginal=logmarginal,
+              modes=modes))
+}
+
+
+###Below how to do Laplace approximation with a Inv Gamma prior on the SD (for comparison mostly)
+
+
+logmarginal_invgamma <- function(Sy2,a0,b0){
+  
+  "Complete gain function using log Laplace apprxoimation with  a Inv Gamma prior on Variance"
+  T <- length(Sy2)
+  Sn <- seq(T,1)
+  null <- cumsum(c(0,Sy2))[-(T+1)]/2
+  mode <- (revcumsum(Sy2)+2*b0)/(Sn+2*(a0+1)) #mode is on sigma^2
+  f <- -(revcumsum(Sy2)+b0)/2/mode - (Sn+2*(a0+1))*log(sqrt(mode))
+  d2 <- -(3 *revcumsum(Sy2)-2*b0)/mode^2+(Sn+2*(a0+1))/mode
+  loglap <- f+ 1/2*log(2*pi)-1/2*log(abs(d2))
+  return(-null+loglap)
+}
+
+
+
+###Below how to do Laplace approximation with  Gamma prior on the Precision (for comparison mostly)
+
+
+logmarginal_gamma <- function(Sy2,a0,b0){
+  
+  "Complete gain function using log Laplace apprxoimation with  a Inv Gamma prior on Variance"
+  T <- length(Sy2)
+  Sn <- seq(T,1)
+  null <- cumsum(c(0,Sy2))[-(T+1)]/2
+  mode <- (Sn/2+(a0-1))/(revcumsum(Sy2)/2+b0) #mode is on sigma^2
+  mode[mode < 10^-5] <- 10^-5
+  f <- -(revcumsum(Sy2)/2+b0)*mode + (Sn/2+(a0-1))*log(mode)
+  d2 <- -(Sn/2 + (a0-1))/mode^2
+  loglap <- f+ 1/2*log(2*pi)-1/2*log(abs(d2))
+  return(list(logmarginal=-null+loglap,
+              modes=mode))
+}
+
+
+
+
