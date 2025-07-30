@@ -1,3 +1,14 @@
+OBSOLETE: while the package still functions, a new, better, faster version is available at https://github.com/davis-berlind/MICH
+It covers the variance change point detection, but one has also other type of changes (mean, mean and variance, multivariate/high-dimensional setting)
+
+MICH implements: 
+1.  Cappello, L., Madrid Padilla, O. H. (2025), Bayesian variance change point detection with credible sets.  IEEE Transations of Pattern Analysis and Machine Intelligence.
+2. Berlind, D.,  Cappello, L., Madrid Padilla, O. H. (2025), A Bayesian framework for change-point detection with uncertainty quantification, arXiv. 
+
+------------
+
+for PRISCA
+
 Installation
 ------------
 
@@ -19,11 +30,7 @@ Vignettes
 References
 ----------
 
-1.  Cappello, L., Madrid Padilla, O. H. (2022),Variance change point detection with credible sets.  Coming soon
+1.  Cappello, L., Madrid Padilla, O. H. (2025), Bayesian variance change point detection with credible sets.  IEEE Transations of Pattern Analysis and Machine Intelligence.
 
 
-Numerical Experiments in the Manuscript
-----------
-
-The draft includes several numerical experiments. Soon a github link will be made available to fully reproduce the paper. While they are based on the same methodology, they rely on a less user-friendly implementation of the functions included in this package. 
 
